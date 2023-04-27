@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 import { login, signup, resetStatus } from './credentialsSlice';
-import { loadTasks } from '../todos/taskListSlice';
+import { loadTasks } from '../task-list/taskListSlice';
 import { setMenu } from '../commons/commonsSlice';
 import styles, { themes } from '../../styles/s-Credentials';
 

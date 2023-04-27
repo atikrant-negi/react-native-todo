@@ -15,7 +15,7 @@ from 'react-native';
 import styles, { themes } from '../../styles/s-TaskAdd';
 import { RootState } from '../../app/store';
 
-import { addTask } from '../todos/taskListSlice';
+import { addTask } from '../task-list/taskListSlice';
 
 export default function TaskAdd(): JSX.Element {
     const tasks = useSelector((state: RootState) => state.tasks.tasks);

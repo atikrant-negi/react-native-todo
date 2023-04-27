@@ -15,14 +15,14 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import Credentials from './features/login/Credentials';
-import TaskList from './features/todos/TaskList';
+import Credentials from './features/credentials/Credentials';
+import TaskList from './features/task-list/TaskList';
 import TaskAdd from './features/task-add/TaskAdd';
 
 import store, { RootState, AppDispatch } from './app/store';
 import { setMenu } from './features/commons/commonsSlice';
-import { logout, resetStatus } from './features/login/credentialsSlice';
-import { syncTasks, resetSyncStatus } from './features/todos/taskListSlice';
+import { logout, resetStatus } from './features/credentials/credentialsSlice';
+import { syncTasks, resetSyncStatus } from './features/task-list/taskListSlice';
 import styles, { themes } from './styles/s-App';
 
 export default function App(): JSX.Element {

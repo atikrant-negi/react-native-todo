@@ -1,8 +1,8 @@
 import {  configureStore } from '@reduxjs/toolkit';
 
 import commonsReducer from '../features/commons/commonsSlice';
-import credentialsReducer from '../features/login/credentialsSlice';
-import tasksReducer from '../features/todos/taskListSlice';
+import credentialsReducer from '../features/credentials/credentialsSlice';
+import tasksReducer from '../features/task-list/taskListSlice';
 import finishedReducer from '../features/finished/finishedSlice';
 
 const store = configureStore({
