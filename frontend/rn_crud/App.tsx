@@ -15,14 +15,14 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import Credentials from './features/login/Credentials';
-import TaskList from './features/todos/TaskList';
+import Credentials from './features/credentials/Credentials';
+import TaskList from './features/task-list/TaskList';
 import TaskAdd from './features/task-add/TaskAdd';
 
 import store, { RootState, AppDispatch } from './app/store';
 import { setMenu } from './features/commons/commonsSlice';
-import { logout, resetStatus } from './features/login/credentialsSlice';
-import { syncTasks, resetSyncStatus } from './features/todos/taskListSlice';
+import { resetStatus } from './features/credentials/credentialsSlice';
+import { resetSyncStatus } from './features/task-list/taskListSlice';
 import styles, { themes } from './styles/s-App';
 
 export default function App(): JSX.Element {
@@ -136,7 +136,6 @@ type MenuModalProps = HeaderProps & Readonly <{
 }>;
 const MenuModal = (props: MenuModalProps): JSX.Element => {
   const menu = useSelector((state: RootState) => state.commons.menuIndex);
-  const credentials = useSelector((state: RootState) => state.credentials);
   const dispatch = useDispatch<AppDispatch>();
 
   return (
@@ -170,7 +169,7 @@ const MenuModal = (props: MenuModalProps): JSX.Element => {
               Platform.OS == 'ios' ? themes[props.colorScheme].FG_BTN_primary : themes[props.colorScheme].BG_BTN_primary
             } onPress = {() => {
               props.setShowMenu(false);
-              dispatch(syncTasks());
+              dispatch({ type: 'SYNC_TASKS' });
             }}
           />
         </View>
@@ -180,8 +179,8 @@ const MenuModal = (props: MenuModalProps): JSX.Element => {
             } onPress = {() => { 
               props.setShowMenu(false);
               Alert.alert("Are you sure you want to logout?", "", [
-                { text: 'no', onPress: () => {  } },
-                { text: 'yes', onPress: () => { dispatch(logout(undefined)) } }
+                {text: 'no', onPress: () => {  }},
+                {text: 'yes', onPress: () => { dispatch({ type: 'LOGOUT' }) }}
               ])
             }}
           />

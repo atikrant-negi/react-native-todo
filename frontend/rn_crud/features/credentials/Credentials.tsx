@@ -13,8 +13,7 @@ import {
     useColorScheme
 } from 'react-native';
 
-import { login, signup, resetStatus } from './credentialsSlice';
-import { loadTasks } from '../todos/taskListSlice';
+import { resetStatus } from './credentialsSlice';
 import { setMenu } from '../commons/commonsSlice';
 import styles, { themes } from '../../styles/s-Credentials';
 
@@ -49,7 +48,8 @@ export default function Credentials(): JSX.Element {
             if (credentials.status == 'authorized') {
                 resetAll();
                 dispatch(setMenu(1));
-                dispatch(loadTasks());
+                dispatch(resetStatus(undefined));
+                dispatch({ type: 'LOAD_TASKS' });
             }
             else if (credentials.status == 'rejected') {
                 setPassword(['', '']);
@@ -150,7 +150,7 @@ function submitForm(type: 'login' | 'signup', cred: any, dispatch: Function): vo
             Alert.alert('Password should be at least 8 characters long');
         }
         else {
-            dispatch(login(cred));
+            dispatch({ type: 'LOGIN', payload: cred })
         }
     }
     else {
@@ -165,7 +165,7 @@ function submitForm(type: 'login' | 'signup', cred: any, dispatch: Function): vo
         }
         else {
             delete cred.passwordConf;
-            dispatch(signup(cred));
+            dispatch({ type: 'SIGNUP', payload: cred });
         }
     }
 };
