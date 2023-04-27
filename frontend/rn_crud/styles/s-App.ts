@@ -47,11 +47,12 @@ const styles = (theme: Theme) => StyleSheet.create({
     modalMenuContainer: {
         height: '100%',
         backgroundColor: themes[theme].BG_MODAL_backdrop,
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        padding: 10
     },
     modalMenuItem: {
         backgroundColor: themes[theme].BG_secondary,
-        height: 50,
+        height: 40,
         justifyContent: 'center',
         marginTop: 10
     },
@@ -64,10 +65,11 @@ const styles = (theme: Theme) => StyleSheet.create({
     },
     modalMenuButtonOuter: {
         backgroundColor: themes[theme].BG_BTN_primary,
-        height: 50,
+        height: 40,
         justifyContent: 'center',
         overflow: 'hidden',
-        marginTop: 10
+        marginTop: 10,
+        borderRadius: 2
     },
 
     // ---------- components

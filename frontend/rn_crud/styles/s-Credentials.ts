@@ -20,14 +20,15 @@ const styles = (theme: Theme) => StyleSheet.create({
         borderRadius: 2,
 
         color: themes[theme].FG_INPUT_primary,
-        fontWeight: 'bold',
+        fontWeight: 'bold'
     },
     submitOuter: {
         backgroundColor: themes[theme].BG_BTN_primary,
-        height: 50,
+        height: 40,
+        justifyContent: 'center',
         marginBottom: 10,
         borderRadius: 2,
-        justifyContent: 'center'
+        overflow: 'hidden'
     }
 });
 

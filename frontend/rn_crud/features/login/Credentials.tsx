@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 import { login, signup, resetStatus } from './credentialsSlice';
-import { fetchTasks } from '../todos/taskListSlice';
+import { loadTasks } from '../todos/taskListSlice';
 import { setMenu } from '../commons/commonsSlice';
 import styles, { themes } from '../../styles/s-Credentials';
 
@@ -49,7 +49,7 @@ export default function Credentials(): JSX.Element {
             if (credentials.status == 'authorized') {
                 resetAll();
                 dispatch(setMenu(1));
-                dispatch(fetchTasks());
+                dispatch(loadTasks());
             }
             else if (credentials.status == 'rejected') {
                 setPassword(['', '']);
@@ -164,6 +164,7 @@ function submitForm(type: 'login' | 'signup', cred: any, dispatch: Function): vo
             Alert.alert('Passwords do not match');
         }
         else {
+            delete cred.passwordConf;
             dispatch(signup(cred));
         }
     }

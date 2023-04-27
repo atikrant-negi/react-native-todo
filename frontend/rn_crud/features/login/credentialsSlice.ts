@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { fetchLogin, fetchSignup, fetchLogout } from './credentialsApi';
 
 const initialState: CredentialsState = {
     username: '',
@@ -14,24 +15,8 @@ type LoginCredentials = {
     password: string
 };
 export const login = createAsyncThunk('credentials/login', async (credentials: LoginCredentials) => {
-    const response = await fetch('http://192.180.0.211:8000/auth/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(credentials)
-    })
-    .then(x => {
-        return Promise.all([x.text(), Promise.resolve(x.status)])
-    }).then(([text, status]) => {
-        if (!(status >= 200 && status < 300)) throw text;
-        else return {
-            username: credentials.username,
-            sessionID: text
-        };
-    });
-
-    return response;
+    const res = await fetchLogin(credentials.username, credentials.password);
+    return res;
 });
 
 type SignupCredentials = LoginCredentials & {
@@ -39,21 +24,8 @@ type SignupCredentials = LoginCredentials & {
     email: string,
 };
 export const signup = createAsyncThunk('credentials/signup', async (credentials: SignupCredentials) => {
-    const response = await fetch('http://192.180.0.211:8000/auth/signup', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(credentials)
-    })
-    .then(x => {
-        return Promise.all([x.text(), Promise.resolve(x.status)])
-    }).then(([text, status]) => {
-        if (!(status >= 200 && status < 300)) throw text;
-        else return text
-    });
-
-    return response;
+    const res = await fetchSignup(credentials);
+    return res;
 });
 
 export const logout = createAsyncThunk('credentials/logout', async (payload: any, thunkAPI) => {
@@ -61,25 +33,8 @@ export const logout = createAsyncThunk('credentials/logout', async (payload: any
         credentials: CredentialsState;
     };
 
-    const response = await fetch('http://192.180.0.211:8000/auth/logout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            username: state.credentials.username,
-            sessionID: state.credentials.sessionID
-        })
-    })
-    .then(x => {
-        return Promise.all([x.text(), Promise.resolve(x.status)])
-    })
-    .then(([text, status]) => {
-        if (!(status >= 200 && status < 300)) throw text;
-        else return text;
-    })
-
-    return response;
+    const res = await fetchLogout(state.credentials.username, state.credentials.sessionID);
+    return res;
 });
 
 // ---------- slice

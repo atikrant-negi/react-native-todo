@@ -3,7 +3,7 @@
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import base64 from 'base-64';
+import { fetchGetTasks, fetchDeleteTasks, fetchAddTasks } from './taskListApi';
 
 const initialState =  {
     tasks: [] as Array <TaskState>,
@@ -17,22 +17,13 @@ type Credentials = {
     username: string,
     sessionID: string
 };
-export const fetchTasks = createAsyncThunk('tasks/fetchTasks', async (payload, thunkAPI) => {
+export const loadTasks = createAsyncThunk('tasks/loadTasks', async (payload, thunkAPI) => {
     const state = thunkAPI.getState() as {
         credentials: Credentials
     };
     const cred = state.credentials;
-    const res = await fetch('http://192.180.0.211:8000/user/tasks', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Basic ${base64.encode(cred.username + ':' + cred.sessionID)}`
-        }
-    }).then(res => {
-        if (res.status >= 200 && res.status < 300)
-            return res.json();
-        else return res.text();
-    });
-
+    const res = await fetchGetTasks(cred.username, cred.sessionID);
+    
     return res;
 });
 
@@ -41,33 +32,13 @@ export const syncTasks = createAsyncThunk('tasks/syncTasks', async (payload, thu
         credentials: Credentials,
         tasks: typeof initialState
     };
-    const cred = state.credentials;
 
-    await fetch('http://192.180.0.211:8000/user/removeAllTasks', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Basic ${base64.encode(cred.username + ':' + cred.sessionID)}`
-        }
-    }).then(res => {
-        return Promise.all([res.text(), Promise.resolve(res.status)]);
-    }).then(([text, status]) => {
-        if (!(status >= 200 && status < 300)) throw text;
-        else return text;
-    });
-
-    const res = await fetch('http://192.180.0.211:8000/user/addTasks', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Basic ${base64.encode(cred.username + ':' + cred.sessionID)}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(state.tasks.tasks)
-    }).then(res => {
-        return Promise.all([res.text(), Promise.resolve(res.status)]);
-    }).then(([text, status]) => {
-        if (!(status >= 200 && status < 300)) throw text;
-        else return text;
-    });
+    await fetchDeleteTasks(state.credentials.username, state.credentials.sessionID);
+    const res = await fetchAddTasks(
+        state.credentials.username, 
+        state.credentials.sessionID, 
+        state.tasks.tasks
+    );
 
     return res;
 });
@@ -105,7 +76,7 @@ const tasksSlice = createSlice({
     },
     extraReducers(builder) {
         builder
-        .addCase(fetchTasks.pending, (state, action) => {
+        .addCase(loadTasks.pending, (state, action) => {
             state.syncStatus = 'pending';
             state.syncStatusText = ''
         })
@@ -114,7 +85,7 @@ const tasksSlice = createSlice({
             state.syncStatusText = ''
         })
         
-        .addCase(fetchTasks.fulfilled, (state, action) => {
+        .addCase(loadTasks.fulfilled, (state, action) => {
             state.syncStatus = 'fetched';
             state.tasks = action.payload;
         })
@@ -123,7 +94,7 @@ const tasksSlice = createSlice({
             state.syncStatusText = action.payload;
         })
 
-        .addCase(fetchTasks.rejected, (state, action) => {
+        .addCase(loadTasks.rejected, (state, action) => {
             state.syncStatus = 'rejected';
             state.syncStatusText = action.error.message || '';
         })
@@ -133,6 +104,8 @@ const tasksSlice = createSlice({
         })
     }
 });
+
+// exports
 
 export const { add: addTask, remove: removeTask, update: updateTask, resetStatus: resetSyncStatus } = tasksSlice.actions;
 export default tasksSlice.reducer;
