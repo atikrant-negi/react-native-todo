@@ -21,8 +21,8 @@ import TaskAdd from './features/task-add/TaskAdd';
 
 import store, { RootState, AppDispatch } from './app/store';
 import { setMenu } from './features/commons/commonsSlice';
-import { logout, resetStatus } from './features/credentials/credentialsSlice';
-import { syncTasks, resetSyncStatus } from './features/task-list/taskListSlice';
+import { setCredentials } from './features/credentials/credentialsSlice';
+import { useLogoutMutation, useDeleteTasksMutation, useAddTasksMutation } from './features/api/apiSlice';
 import styles, { themes } from './styles/s-App';
 
 export default function App(): JSX.Element {
@@ -34,10 +34,7 @@ export default function App(): JSX.Element {
 }
 
 const TaskTracker = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const menu = useSelector((state: RootState) => state.commons.menuIndex);
-  const syncStatus = useSelector((state: RootState) => state.tasks.syncStatus);
-  const credentials = useSelector((state: RootState) => state.credentials);
   
   const colorScheme = useColorScheme() == 'dark' ? 'dark' : 'light';
   const [prevColorScheme, setPrevColorScheme] = useState(colorScheme);
@@ -46,30 +43,6 @@ const TaskTracker = () => {
     setPrevColorScheme(colorScheme);
     setStyle(styles(colorScheme));
   }
-
-  // check the status of logout action
-  useEffect(() => {
-    if (credentials.status == 'destroyed') {
-      dispatch(resetStatus(undefined));
-      dispatch(setMenu(0));
-    }
-    else if (menu != 0 && credentials.status == 'rejected') {
-      Alert.alert(credentials.statusText);
-      dispatch(resetStatus(undefined));
-    }
-  }, [credentials]);
-
-  // check the status of syncing with the server
-  useEffect(() => {
-    if (syncStatus == 'synced') {
-      dispatch(resetSyncStatus(undefined));
-      Alert.alert('sync successful');
-    }
-    else if (syncStatus == 'rejected') {
-      dispatch(resetStatus(undefined));
-      Alert.alert('sync failed');
-    }
-  }, [syncStatus]);
 
   return (
     <SafeAreaView style = { style.topWindow }>
@@ -101,8 +74,43 @@ type HeaderProps = Readonly<{
   colorScheme: 'light' | 'dark'
 }>;
 const Header = (props: HeaderProps): JSX.Element => {
+  const dispatch = useDispatch();
   const menu = useSelector((state: RootState) => state.commons.menuIndex);
+  const tasks = useSelector((state: RootState) => state.tasks);
+  const credentials = useSelector((state: RootState) => state.credentials);
+
+  const [logout, logoutStatus] = useLogoutMutation();
+  const [deleteTasks, deleteTasksStatus] = useDeleteTasksMutation();
+  const [addTasks, addTasksStatus] = useAddTasksMutation();
+
   const [showMenu, setShowMenu] = useState(false);
+
+  // check sync status
+  useEffect(() => {
+    if (addTasksStatus.isSuccess) {
+      addTasksStatus.reset();
+      Alert.alert('Sync successful');
+    }
+    else if (deleteTasksStatus.isSuccess) {
+      addTasks({ ...credentials, tasks: tasks });
+      deleteTasksStatus.reset();
+    }
+    else if (deleteTasksStatus.isError || addTasksStatus.isError) {
+      Alert.alert('Sync Failed')
+    }
+  }, [deleteTasksStatus, addTasksStatus]);
+
+  // check logout status
+  useEffect(() => {
+    if (logoutStatus.isSuccess) {
+      dispatch(setCredentials({ username: '', sessionID: '' }));
+      dispatch(setMenu(0));
+    }
+    else if (logoutStatus.isError) {
+      const err = logoutStatus.error as any;
+      Alert.alert(err.data.message);
+    }
+  }, [logoutStatus]);
 
   return (
     <>
@@ -121,7 +129,10 @@ const Header = (props: HeaderProps): JSX.Element => {
       <View style = {{ marginTop: 50 }} ></View>
       {
         showMenu ? (
-          <MenuModal style = { props.style } colorScheme = { props.colorScheme } setShowMenu = { setShowMenu } />
+          <MenuModal 
+            style = { props.style } colorScheme = { props.colorScheme } 
+            setShowMenu = { setShowMenu } logout = { logout } deleteTasks = { deleteTasks }
+          />
         ): (
           <></>
         )
@@ -132,12 +143,24 @@ const Header = (props: HeaderProps): JSX.Element => {
 
 // todo: complete logout action
 type MenuModalProps = HeaderProps & Readonly <{ 
-  setShowMenu: Function 
+  setShowMenu: Function,
+  logout: Function,
+  deleteTasks: Function
 }>;
 const MenuModal = (props: MenuModalProps): JSX.Element => {
   const menu = useSelector((state: RootState) => state.commons.menuIndex);
   const credentials = useSelector((state: RootState) => state.credentials);
   const dispatch = useDispatch<AppDispatch>();
+
+  const handleLogout = () => {
+    props.setShowMenu(false);
+    props.logout(credentials);
+  };
+
+  const handleSync = () => {
+    props.setShowMenu(false);
+    props.deleteTasks(credentials);
+  };
 
   return (
     <Modal
@@ -168,10 +191,7 @@ const MenuModal = (props: MenuModalProps): JSX.Element => {
         <View style = { props.style.modalMenuButtonOuter } >
           <Button title = 'sync with server' color = { 
               Platform.OS == 'ios' ? themes[props.colorScheme].FG_BTN_primary : themes[props.colorScheme].BG_BTN_primary
-            } onPress = {() => {
-              props.setShowMenu(false);
-              dispatch(syncTasks());
-            }}
+            } onPress = { handleSync }
           />
         </View>
         <View style = { props.style.modalMenuButtonOuter } >
@@ -180,8 +200,8 @@ const MenuModal = (props: MenuModalProps): JSX.Element => {
             } onPress = {() => { 
               props.setShowMenu(false);
               Alert.alert("Are you sure you want to logout?", "", [
-                { text: 'no', onPress: () => {  } },
-                { text: 'yes', onPress: () => { dispatch(logout(undefined)) } }
+                { text: 'no', onPress: () => {} },
+                { text: 'yes', onPress: handleLogout }
               ])
             }}
           />

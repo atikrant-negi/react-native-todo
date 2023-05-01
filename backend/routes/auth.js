@@ -17,7 +17,9 @@ router.post('/signup', bodyParser.json(), (req, res, next) => {
     // reject if required fields are empty
     let body = req.body;
     if (hasEmptyFields(body, 'name', 'username', 'email', 'password')) {
-        res.status(400).send('body contains missing or empty fields');
+        res.status(400).json({
+            message: 'body contains missing or empty fields'
+        });
         return;
     }
 
@@ -27,7 +29,9 @@ router.post('/signup', bodyParser.json(), (req, res, next) => {
         // username and email should not be associated with multiple accounts
         let index = data.findIndex(x => ( x.username === body.username || x.email === body.username ));
         if (index != -1) {
-            res.status(400).send('username or email already exists');
+            res.status(400).json({
+                message: 'username or email already exists'
+            });
             return;
         }
         data.push(body);
@@ -35,14 +39,20 @@ router.post('/signup', bodyParser.json(), (req, res, next) => {
         // update and write to the file
         // error can only be triggered in case of a write failure
         fs.writeFile(paths.users, JSON.stringify(data)).then(() => {
-            res.status(201).send('user added successfully');
+            res.status(201).json({
+                message: 'user added successfully'
+            });
         }).catch((err) => {
             console.log(err);
-            res.status(500).send('500, internal error')
+            res.status(500).json({
+                message: '500, internal error'
+            });
         });
     }).catch(err => {
         console.log(err);
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
     });
 });
 
@@ -50,7 +60,9 @@ router.post('/login', bodyParser.json(), (req, res, next) => {
     // reject if required files are empty
     let body = req.body;
     if (hasEmptyFields(body, 'username', 'password')) {
-        res.status(400).send('body contains missing or empty fields');
+        res.status(400).json({
+            error: 'body contains missing or empty fields'
+        });
         return;
     }
 
@@ -61,7 +73,9 @@ router.post('/login', bodyParser.json(), (req, res, next) => {
         data = JSON.parse(data.toString());
         let index = data.findIndex(x => x.username == body.username);
         if (index == -1 || data[index].password != body.password) {
-            res.status(400).send('invalid credentials');
+            res.status(400).json({
+                message: 'invalid credentials'
+            });
             return;
         }
 
@@ -74,13 +88,20 @@ router.post('/login', bodyParser.json(), (req, res, next) => {
             else sessions[body.username].push(key);
 
             fs.writeFile(paths.sessions, JSON.stringify(sessions)).then(() => {
-                res.status(201).send(key);
+                res.status(201).json({
+                    username: body.username,
+                    sessionID: key
+                });
             }).catch(err => {
-                res.status(500).send('500, internal error');
+                res.status(500).json({
+                    message: '500, internal error'
+                });
                 console.log(err);
             });
         }).catch(err => {
-            res.status(500).send('500, internal error');
+            res.status(500).json({
+                message: '500, internal error'
+            });
             console.log(err);
         });
     });
@@ -90,7 +111,9 @@ router.post('/logout', bodyParser.json(), (req, res, next) => {
     // reject if required field are empty
     let body = req.body;
     if (hasEmptyFields(body, 'username', 'sessionID')) {
-        res.status(400).send('body contains missing or empty fields');
+        res.status(400).json({
+            message: 'body contains missing or empty fields'
+        });
         return;
     }
 
@@ -99,7 +122,9 @@ router.post('/logout', bodyParser.json(), (req, res, next) => {
         // fetch the index of the key associated with the username
         sessions = JSON.parse(sessions.toString());
         if (!sessions[body.username] || !sessions[body.username].find(x => x == body.sessionID)) {
-            res.status(401).send('Invalid Credentials');
+            res.status(401).json({ 
+                message: 'Invalid Credentials'
+            });
             return;
         }
 
@@ -108,13 +133,19 @@ router.post('/logout', bodyParser.json(), (req, res, next) => {
         else sessions[body.username] = sessions[body.username].filter(x => x != body.sessionID);
         
         fs.writeFile(paths.sessions, JSON.stringify(sessions)).then(() => {
-            res.status(201).send('logout successful');
+            res.status(201).send({
+                message: 'logout successful'
+            });
         }).catch(err => {
-            res.status(500).send('500, internal error');
+            res.status(500).json({
+                message: '500, internal error'
+            });
             console.log(err);
         });
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });

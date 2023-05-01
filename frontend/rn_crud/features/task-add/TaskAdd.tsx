@@ -18,7 +18,7 @@ import { RootState } from '../../app/store';
 import { addTask } from '../task-list/taskListSlice';
 
 export default function TaskAdd(): JSX.Element {
-    const tasks = useSelector((state: RootState) => state.tasks.tasks);
+    const tasks = useSelector((state: RootState) => state.tasks);
     const dispatch = useDispatch();
 
     const [title, setTitle] = useState('');

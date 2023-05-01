@@ -16,7 +16,9 @@ const paths = {
 // parse authorization credentials
 router.use((req, res, next) => {
     if (!req.headers.authorization) {
-        res.status(401).send('Credentials invalid');
+        res.status(401).json({
+            message: 'Credentials invalid'
+        });
         return;
     }
 
@@ -27,14 +29,18 @@ router.use((req, res, next) => {
     fs.readFile(paths.sessions).then(sessions => {
         sessions = JSON.parse(sessions.toString());
         if (!sessions[username] || !sessions[username].find(x => x == token)) {
-            res.status(401).send('Invalid credentials');
+            res.status(401).json({
+                message: 'Invalid credentials'
+            });
             return;
         }
         req.auth = { username, token };
 
         next();
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });
@@ -50,7 +56,9 @@ router.get('/info', (req, res, next) => {
         delete user.password;
         res.json(user);
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });
@@ -63,7 +71,9 @@ router.get('/tasks', (req, res, next) => {
 
         res.json(tasks);
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });
@@ -73,12 +83,16 @@ router.post('/addTasks', bodyParser.json(), (req, res, next) => {
     // reject if required fields are empty
     let body = req.body;
     if (!Array.isArray(body) && hasEmptyFields(body, 'id', 'title', 'priority', 'addDate')) {
-        res.status(400).send('body contains missing or empty fields');
+        res.status(400).json({
+            message: 'body contains missing or empty fields'
+        });
         return;
     }
     for (let i = 0; i < body.length; i++) {
         if (hasEmptyFields(body[i], 'id', 'title', 'priority', 'addDate')) {
-            res.status(400).send('body contains missing or empty fields');
+            res.status(400).json({
+                message: 'body contains missing or empty fields'
+            });
             return;
         }
     }
@@ -108,14 +122,20 @@ router.post('/addTasks', bodyParser.json(), (req, res, next) => {
 
         // update data
         fs.writeFile(paths.tasks, JSON.stringify(tasks)).then(() => {
-            res.status(201).send('Task added successfully');
+            res.status(201).json({
+                message: 'Task added successfully'
+            });
         }).catch(err => {
-            res.status(500).send('500, internal error');
+            res.status(500).json({
+                message: '500, internal error'
+            });
             console.log(err);
         });
 
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });
@@ -129,17 +149,25 @@ router.post('/removeAllTasks', (req, res, next) => {
             tasks[req.auth.username] = [];
 
             fs.writeFile(paths.tasks, JSON.stringify(tasks)).then(() => {
-                res.status(201).send('Tasks removed successfully');
+                res.status(201).json({
+                    message: 'Tasks removed successfully'
+                });
             }).catch(err => {
-                res.status(500).send('500, internal error');
+                res.status(500).json({
+                    message: '500, internal error'
+                });
                 console.log(err);
             });
         }
         else {
-            res.status(201).send('Tasks removed successfully');
+            res.status(201).json({
+                message: 'Tasks removed successfully'
+            });
         }
     }).catch(err => {
-        res.status(500).send('500, internal error');
+        res.status(500).json({
+            message: '500, internal error'
+        });
         console.log(err);
     });
 });

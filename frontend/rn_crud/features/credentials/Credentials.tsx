@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
-import { AppDispatch, RootState } from '../../app/store';
+import { AppDispatch } from '../../app/store';
 
 import {
     View,
@@ -13,16 +13,18 @@ import {
     useColorScheme
 } from 'react-native';
 
-import { login, signup, resetStatus } from './credentialsSlice';
-import { loadTasks } from '../task-list/taskListSlice';
+import { setCredentials } from './credentialsSlice';
 import { setMenu } from '../commons/commonsSlice';
+import { useLoginMutation, useSignupMutation } from '../api/apiSlice';
 import styles, { themes } from '../../styles/s-Credentials';
 
 // ---------- components
 
 export default function Credentials(): JSX.Element {
-    const credentials = useSelector((state: RootState) => state.credentials);
     const dispatch = useDispatch<AppDispatch>();
+
+    const [login, loginStatus] = useLoginMutation();
+    const [signup, signupStatus] = useSignupMutation();
 
     const [type, setType]: ['login' | 'signup', Function] = useState('login');
     const [name, setName] = useState('');
@@ -38,38 +40,55 @@ export default function Credentials(): JSX.Element {
         setStyle(styles(colorScheme));
     }
 
-    let resetAll = useCallback(() => {
+    const resetAll = () => {
         setName(''); setUsername('');
         setEmail(''); setPassword(['', '']);
-    }, []);
+    };
+
+    const handleLogin = async () => {
+        if (type == 'login' && !loginStatus.isLoading) {
+            if (canSubmitForm('login', { username, password: password[0] })) {
+                login({ username, password: password[0] });
+            }
+        }
+        else if (!signupStatus.isLoading) {
+            if (canSubmitForm('signup', {
+                name, email, username,
+                password: password[0],
+                passwordConf: password[1]
+            })) {
+                signup({ name, email, username, password: password[0] });
+            }
+        }
+    };
 
     // handles login / singup success and failure
     useEffect(() => {
         if (type == 'login') {
-            if (credentials.status == 'authorized') {
+            if (loginStatus.isSuccess) {
+                const data = loginStatus.data;
                 resetAll();
+                dispatch(setCredentials(data));
                 dispatch(setMenu(1));
-                dispatch(loadTasks());
             }
-            else if (credentials.status == 'rejected') {
-                setPassword(['', '']);
-                dispatch(resetStatus(undefined));
-                Alert.alert(credentials.statusText);
+            else if (loginStatus.isError) {
+                let err = loginStatus.error as any;
+                Alert.alert(err.data.message);
             }
         }
         else {
-            if (credentials.status == 'created') {
+            if (signupStatus.isSuccess) {
                 Alert.alert('Account created successfully');
                 resetAll();
-                dispatch(resetStatus(undefined));
+                setType('login');
             }
-            else if (credentials.status == 'rejected') {
-                Alert.alert(credentials.statusText);
+            else if (signupStatus.isError) {
+                let err = signupStatus.error as any;
+                Alert.alert(err.data.message);
                 setPassword(['', '']);
-                dispatch(resetStatus(undefined));
             }
         }
-    }, [credentials, type]);
+    }, [loginStatus, signupStatus, type]);
 
     return (
         <View style = { style.loginContainer }>
@@ -112,17 +131,7 @@ export default function Credentials(): JSX.Element {
                 <Button 
                     title = { type } 
                     color = { Platform.OS == 'ios' ? themes[colorScheme].FG_BTN_primary : themes[colorScheme].BG_BTN_primary }
-                    onPress = {() => {
-                        if (type == 'login') {
-                            submitForm('login', { username, password: password[0] }, dispatch);
-                        }
-                        else {
-                            submitForm('signup', {
-                                name, username, email,
-                                password: password[0], passwordConf: password[1]
-                            }, dispatch);
-                        }
-                    }}
+                    onPress = { handleLogin }
                 />
             </View>
             <View style = { style.submitOuter }>
@@ -141,31 +150,27 @@ export default function Credentials(): JSX.Element {
 
 // ---------- helper functions
 
-function submitForm(type: 'login' | 'signup', cred: any, dispatch: Function): void {
+function canSubmitForm(type: 'login' | 'signup', cred: any): boolean {
     if (type == 'login') {
         if (!cred.username || !cred.password) {
             Alert.alert('All fields are required');
+            return false;
         }
-        else if (cred.password.length < 8) { 
-            Alert.alert('Password should be at least 8 characters long');
-        }
-        else {
-            dispatch(login(cred));
-        }
+        else return true;
     }
     else {
         if (!cred.name || !cred.email || !cred.username || !cred.password || !cred.passwordConf) {
             Alert.alert('All fields are required');
+            return false;
         }
         else if (cred.password.length < 8) {
             Alert.alert('Password should be at least 8 characters long');
+            return false;
         }
         else if (cred.password != cred.passwordConf) {
             Alert.alert('Passwords do not match');
+            return false;
         }
-        else {
-            delete cred.passwordConf;
-            dispatch(signup(cred));
-        }
+        else return true;
     }
 };

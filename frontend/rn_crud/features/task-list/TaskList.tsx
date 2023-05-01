@@ -1,4 +1,4 @@
-import { memo, useState, createContext, Context, useContext } from 'react';
+import { memo, useState, createContext, Context, useContext, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
     View,
@@ -10,21 +10,26 @@ import {
 
     Platform,
     useColorScheme,
+    Alert
 } from 'react-native';
 
 import { RootState } from '../../app/store';
 import { TaskState } from './taskListSlice';
 
-import styles, { themes } from '../../styles/s-TaskList';
-
-import { removeTask, updateTask } from './taskListSlice';
+import { setTasks, removeTask, updateTask } from './taskListSlice';
 import { addFinished } from '../finished/finishedSlice';
+import { useGetTasksQuery } from '../api/apiSlice';
+
+import styles, { themes } from '../../styles/s-TaskList';
 
 const StyleContext = createContext<any>(null);
 const ThemeContext = createContext<'light' | 'dark'>('dark');
 
 export default function TaskList(): JSX.Element {
-    const tasks = useSelector((state: RootState) => state.tasks.tasks);
+    const dispatch = useDispatch();
+    const tasks = useSelector((state: RootState) => state.tasks);
+    const credentials = useSelector((state: RootState) => state.credentials);
+    const getTasksStatus = useGetTasksQuery(credentials);
 
     const colorScheme = useColorScheme() == 'dark' ? 'dark' : 'light';
     const [editID, setEditID] = useState(-1);
@@ -42,7 +47,17 @@ export default function TaskList(): JSX.Element {
         if (x.priority == 3) pHigh.push(x);
         if (x.priority == 2) pMedium.push(x); 
         if (x.priority == 1) pLow.push(x); 
-    })
+    });
+
+    useEffect(() => {
+        if (getTasksStatus.isSuccess) {
+            dispatch(setTasks(getTasksStatus.data));
+        }
+        else if (getTasksStatus.isError) {
+            const err = getTasksStatus.error as any;
+            Alert.alert(err.data.message);
+        }
+    }, [getTasksStatus]);
 
     return (
         <ThemeContext.Provider value = { colorScheme }>
