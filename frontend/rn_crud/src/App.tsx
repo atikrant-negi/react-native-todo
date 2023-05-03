@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { useColorScheme } from 'react-native';
-import TaskTracker from './features/task-tracker/TaskTracker';
+import TaskTracker from './components/TaskTracker';
 
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import store from './app/store';

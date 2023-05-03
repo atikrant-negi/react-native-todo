@@ -1,4 +1,4 @@
-import { memo, useState, createContext, Context, useContext } from 'react';
+import { memo, useState, createContext, Context, useContext, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
     View,
@@ -10,44 +10,49 @@ import {
 
     Platform,
     useColorScheme,
+    Alert
 } from 'react-native';
-import TaskAdd from '../task-add/TaskAdd';
+import TaskAdd from '../../components/TaskAdd';
+import { SvgSync } from '../../icons/svg';
 
-import { RootState } from '../../app/store';
-import { TaskState } from './taskListSlice';
-
+import { AppDispatch, RootState } from '../../app/store';
+import { TaskState, syncTasks, resetSyncStatus } from './taskListSlice';
 import { removeTask, updateTask } from './taskListSlice';
 import { addFinished } from '../finished/finishedSlice';
 
 import styles, { themes } from '../../styles/s-TaskList';
 import { ScrollView } from 'react-native-gesture-handler';
+import { NavProps } from '../../app/types';
 
 const StyleContext = createContext<any>(null);
 const ThemeContext = createContext<'light' | 'dark'>('dark');
 
-export default function TaskScreen(): JSX.Element {
+export default function TaskScreen({navigation, route} : NavProps): JSX.Element {
+    const colorScheme = useColorScheme() == 'dark' ? 'dark' : 'light';
+    const [prevColorScheme, setPrevColorScheme] = useState(colorScheme);
+    const [style, setStyle] = useState(styles(colorScheme));
+    if (prevColorScheme != colorScheme) {
+        setPrevColorScheme(colorScheme);
+        setStyle(styles(colorScheme));
+    }
+
     return (
-        <>
+        <ThemeContext.Provider value = { colorScheme }>
+        <StyleContext.Provider value = { style }>
             <TaskAdd />
-            <ScrollView bounces = { false }>
+            <ScrollView bounces = { false } style = {{ flex: 1 }}>
                 <TaskList />
             </ScrollView>
-        </>
+            <SyncButton />
+        </StyleContext.Provider>
+        </ThemeContext.Provider>
     );
 }
 
 export function TaskList(): JSX.Element {
     const tasks = useSelector((state: RootState) => state.tasks.tasks);
-
-    const colorScheme = useColorScheme() == 'dark' ? 'dark' : 'light';
     const [editID, setEditID] = useState(-1);
-    const [prevColorScheme, setPrevColorScheme] = useState(colorScheme);
-    const [style, setStyle] = useState(styles(colorScheme));
-
-    if (prevColorScheme != colorScheme) {
-        setPrevColorScheme(colorScheme);
-        setStyle(styles(colorScheme));
-    }
+    const style = useContext(StyleContext);
 
     const activeTask = editID >= 0 ? tasks.find(x => x.id == editID) : undefined;
     let pHigh: Array <TaskState> = [], pMedium: Array <TaskState> = [], pLow: Array <TaskState> = [];
@@ -55,11 +60,10 @@ export function TaskList(): JSX.Element {
         if (x.priority == 3) pHigh.push(x);
         if (x.priority == 2) pMedium.push(x); 
         if (x.priority == 1) pLow.push(x); 
-    })
+    });
 
     return (
-        <ThemeContext.Provider value = { colorScheme }>
-        <StyleContext.Provider value = { style }>
+        <>
             { pHigh.length > 0 && <Text style = { style.priorityClass }> Priority: High </Text> }
             <View style = { style.tasksContainer }>
             {
@@ -93,8 +97,7 @@ export function TaskList(): JSX.Element {
                 ))
             }
             { activeTask && <EditModal {...activeTask} setEditID = { setEditID } /> }
-        </StyleContext.Provider>
-        </ThemeContext.Provider>
+        </>
     );
 }
 
@@ -219,5 +222,41 @@ const EditModal = (props: TaskState & {setEditID: Function}): JSX.Element => {
                 </View>
             </View>
         </Modal>
+    );
+}
+
+function SyncButton():JSX.Element {
+    const dispatch = useDispatch<AppDispatch>();
+    const syncStatus = useSelector((state: RootState) => state.tasks.syncStatus);
+
+    const [opacity, setOpacity] = useState(1);
+    const theme = useContext(ThemeContext);
+    const style = useContext(StyleContext);
+
+    // check the status of syncing with the server
+    useEffect(() => {
+        if (syncStatus == 'synced') {
+            dispatch(resetSyncStatus(undefined));
+            Alert.alert('sync successful');
+        }
+        else if (syncStatus == 'rejected') {
+            dispatch(resetSyncStatus(undefined));
+            Alert.alert('sync failed');
+        }
+    }, [syncStatus]);
+
+    return (
+      <Pressable 
+        style = {[ style.syncButton, { opacity } ]} 
+        onPressIn = {() => { setOpacity(0.5); }} onPressOut = {() => { setOpacity(1); }}
+        onPress = {() => {
+            Alert.alert('Save all changes to server?', '', [
+                { text: 'cancel', onPress: () => {} },
+                { text: 'save', onPress: () => { dispatch(syncTasks()) } }
+            ])
+        }}
+      >
+        <SvgSync fill = { themes[theme].FG_BTN_primary } viewBox = '-12.5 -12.5 50 50'/>        
+      </Pressable>
     );
 }

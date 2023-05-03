@@ -83,6 +83,13 @@ const styles = (theme: Theme) => StyleSheet.create({
         textAlign: 'center',
         fontSize: 26
     },
+    syncButton: {
+        backgroundColor: themes[theme].BG_BTN_primary,
+        position: 'absolute', right: 20, bottom: 20,
+        width: 70, height: 70,
+        borderRadius: 50,
+        justifyContent: 'center'
+    },
 
     // ---------- edit modal
 
