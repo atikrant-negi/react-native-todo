@@ -1,6 +1,6 @@
 const Colors = {
-    BG_main: 'rgb(40 40 40)',
-    BG_primary: 'rgb(0 0 0)',
+    BG_main: 'rgb(50 60 70)',
+    BG_primary: 'rgb(20 20 20)',
     BG_secondary: 'rgb(250 250 250)',
     BG_secondary_highlight: 'rgb(180 180 180)',
     BG_pr_high: 'rgb(191 10 28)',

@@ -11,19 +11,32 @@ import {
     Platform,
     useColorScheme,
 } from 'react-native';
+import TaskAdd from '../task-add/TaskAdd';
 
 import { RootState } from '../../app/store';
 import { TaskState } from './taskListSlice';
 
-import styles, { themes } from '../../styles/s-TaskList';
-
 import { removeTask, updateTask } from './taskListSlice';
 import { addFinished } from '../finished/finishedSlice';
+
+import styles, { themes } from '../../styles/s-TaskList';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const StyleContext = createContext<any>(null);
 const ThemeContext = createContext<'light' | 'dark'>('dark');
 
-export default function TaskList(): JSX.Element {
+export default function TaskScreen(): JSX.Element {
+    return (
+        <>
+            <TaskAdd />
+            <ScrollView bounces = { false }>
+                <TaskList />
+            </ScrollView>
+        </>
+    );
+}
+
+export function TaskList(): JSX.Element {
     const tasks = useSelector((state: RootState) => state.tasks.tasks);
 
     const colorScheme = useColorScheme() == 'dark' ? 'dark' : 'light';

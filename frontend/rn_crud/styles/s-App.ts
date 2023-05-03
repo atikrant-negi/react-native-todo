@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
 import ColorsDark from "./themes/theme-dark";
 import ColorsLight from "./themes/theme-light";
 
@@ -9,15 +9,12 @@ export const themes = {
 
 const styles = (theme: Theme) => StyleSheet.create({
     topWindow: {
-        backgroundColor: themes[theme].BG_main
+        backgroundColor: themes[theme].BG_main,
+        flex: 1
     },
 
     // --------- containers
 
-    containerMain: {
-        height: '100%',
-        width: '100%'
-    },
     containerTitle: {
         backgroundColor: themes[theme].BG_primary,
         position: 'absolute', left: 0, top: 0,
