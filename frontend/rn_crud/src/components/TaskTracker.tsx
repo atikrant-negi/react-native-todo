@@ -8,8 +8,9 @@ import {
   Text,
 
   useColorScheme,
+  Pressable,
 } from 'react-native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { DrawerNavigationProp, createDrawerNavigator } from '@react-navigation/drawer';
 
 import Credentials from '../features/credentials/Credentials';
 import TaskScreen from '../features/task-list/TaskList';
@@ -18,6 +19,7 @@ import ProfileScreen from './Profile';
 
 import { RootState } from '../app/store';
 import styles from '../styles/s-App';
+import { useNavigation } from '@react-navigation/native';
 
 const Drawer = createDrawerNavigator();
 
@@ -36,16 +38,19 @@ export default function TaskTracker():JSX.Element {
     <SafeAreaView style = { style.topWindow }>
 
       <StatusBar barStyle = { colorScheme == 'dark' ? 'light-content': 'dark-content' } />
-      <Header style = { style } colorScheme = { colorScheme } />
       {
         menu == 0 ? (
-          <Credentials />
+          <>
+            <Header style = { style } colorScheme = { colorScheme } />
+            <Credentials />
+          </>
         ): (
           <>
             <Drawer.Navigator 
               initialRouteName = 'Tasks'
               screenOptions = {{
-                headerShown: false,
+                headerShown: true,
+                headerLeft: props => <DrawerIcon />
               }}
             >
               <Drawer.Screen name = 'Tasks' component = { TaskScreen } />
@@ -74,3 +79,14 @@ const Header = (props: HeaderProps): JSX.Element => {
     </>
   )
 };
+
+function DrawerIcon() {
+  const isDark = useColorScheme() == 'dark';
+  const navigation = useNavigation<DrawerNavigationProp<any>>();
+
+  return (
+    <Pressable style = {{ paddingLeft: 10 }} onPress = {() => { navigation.toggleDrawer(); }}>
+      <Text style = {{ color: isDark ? '#fff' : '#000',fontSize: 22, fontWeight: 'bold' }} >{ String.fromCharCode(parseInt('22EF', 16)) } </Text>
+    </Pressable>
+  )
+}
